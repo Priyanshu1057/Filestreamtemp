@@ -1,0 +1,35 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Broadcast - FilmyflixHD Admin{% endblock %}
+
+{% block admin %}
+<div class="max-w-3xl glass-card p-8">
+    <h2 class="text-2xl font-bold mb-2">Broadcast Message</h2>
+    <p class="text-sm text-gray-500 mb-6">Sends to all {{ total }} non-banned members. Basic HTML like &lt;b&gt;, &lt;i&gt; and &lt;a&gt; works.</p>
+
+    <textarea id="msg" rows="7" placeholder="Write your announcement..."
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-pink-500"></textarea>
+
+    <div class="flex items-center gap-3 mt-4">
+        <button onclick="send()" id="btn" class="btn-gradient px-6 py-3 rounded-xl font-bold"><i class="fas fa-paper-plane mr-1"></i> Send broadcast</button>
+        <span id="status" class="text-sm text-gray-400"></span>
+    </div>
+</div>
+
+<script>
+async function send() {
+    const msg = document.getElementById('msg').value.trim();
+    if (!msg) return alert('Write a message first');
+    if (!confirm('Send this message to {{ total }} users?')) return;
+    const btn = document.getElementById('btn');
+    const status = document.getElementById('status');
+    btn.disabled = true; status.textContent = 'Sending...';
+    try {
+        const body = new FormData(); body.append('message', msg);
+        const r = await fetch('/admin/broadcast', { method: 'POST', body });
+        const d = await r.json().catch(() => ({}));
+        status.textContent = r.ok ? `Sent to ${d.sent}, failed ${d.failed}` : 'Failed to send';
+    } catch (e) { status.textContent = 'Failed to send'; }
+    btn.disabled = false;
+}
+</script>
+{% endblock %}

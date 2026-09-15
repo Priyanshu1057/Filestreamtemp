@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-8 flex flex-wrap items-center justify-between gap-4">
+    <div>
+        <span class="pill"><i class="fas fa-shield-halved"></i> Control Room</span>
+        <h1 class="display text-4xl mt-3">Filmyflix<span class="text-gradient">HD</span> Admin</h1>
+    </div>
+    <a href="/admin/logout" class="glass px-4 py-2 rounded-xl text-sm text-gray-300 hover:text-white transition border border-white/10">
+        <i class="fas fa-right-from-bracket mr-1"></i> Log out
+    </a>
+</div>
+
+<div class="glass rounded-2xl p-2 mb-8 flex flex-wrap gap-1 border border-white/10">
+    {% set tabs = [
+        ('dashboard', '/admin', 'fa-gauge-high', 'Dashboard'),
+        ('files', '/admin/files', 'fa-film', 'Files'),
+        ('users', '/admin/users', 'fa-users', 'Users'),
+        ('broadcast', '/admin/broadcast', 'fa-bullhorn', 'Broadcast'),
+        ('settings', '/admin/settings', 'fa-sliders', 'Settings'),
+        ('logs', '/admin/logs', 'fa-scroll', 'Logs')
+    ] %}
+    {% for key, url, icon, label in tabs %}
+    <a href="{{ url }}" class="px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2
+        {% if page == key %}btn-gradient{% else %}text-gray-300 hover:text-white hover:bg-white/5{% endif %}">
+        <i class="fas {{ icon }}"></i> {{ label }}
+    </a>
+    {% endfor %}
+</div>
+
+{% block admin %}{% endblock %}
+{% endblock %}

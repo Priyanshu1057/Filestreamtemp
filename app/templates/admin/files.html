@@ -1,0 +1,103 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Files - FilmyflixHD Admin{% endblock %}
+
+{% block admin %}
+<div class="glass-card p-6 md:p-8">
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div>
+            <h2 class="text-2xl font-bold">File Manager</h2>
+            <p class="text-sm text-gray-500">{{ total }} links stored</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <form action="/admin/files" method="get" class="flex flex-wrap gap-2">
+                <input type="text" name="q" placeholder="Search name or code..." value="{{ query or '' }}"
+                       class="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-pink-500">
+                <select name="state" class="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm">
+                    <option value="all" {% if state=='all' %}selected{% endif %}>All</option>
+                    <option value="live" {% if state=='live' %}selected{% endif %}>Live</option>
+                    <option value="expired" {% if state=='expired' %}selected{% endif %}>Expired</option>
+                </select>
+                <select name="sort" class="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm">
+                    <option value="new" {% if sort=='new' %}selected{% endif %}>Newest</option>
+                    <option value="old" {% if sort=='old' %}selected{% endif %}>Oldest</option>
+                    <option value="views" {% if sort=='views' %}selected{% endif %}>Most viewed</option>
+                    <option value="size" {% if sort=='size' %}selected{% endif %}>Largest</option>
+                </select>
+                <button type="submit" class="btn-gradient px-4 py-2 rounded-xl text-sm font-bold">Filter</button>
+            </form>
+            <button onclick="purgeExpired()" class="px-4 py-2 rounded-xl text-sm font-bold border border-red-500/40 text-red-300 hover:bg-red-500/10">
+                <i class="fas fa-broom mr-1"></i> Purge expired
+            </button>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+            <thead>
+                <tr class="border-b border-white/10 text-gray-400 uppercase text-xs tracking-widest">
+                    <th class="py-3 px-3">File</th>
+                    <th class="py-3 px-3">Code</th>
+                    <th class="py-3 px-3">Size</th>
+                    <th class="py-3 px-3">Views</th>
+                    <th class="py-3 px-3">Uploader</th>
+                    <th class="py-3 px-3">Created</th>
+                    <th class="py-3 px-3">Status</th>
+                    <th class="py-3 px-3 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in files %}
+                <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                    <td class="py-3 px-3 max-w-xs truncate">{{ file.filename }}</td>
+                    <td class="py-3 px-3 font-mono text-xs text-pink-300">{{ file.short_code }}</td>
+                    <td class="py-3 px-3">{{ file.size_human }}</td>
+                    <td class="py-3 px-3">{{ file.access_count or 0 }}</td>
+                    <td class="py-3 px-3 text-gray-400">{{ file.uploader_id }}</td>
+                    <td class="py-3 px-3 text-gray-400">{{ file.created_at.strftime('%d %b %H:%M') if file.created_at else '-' }}</td>
+                    <td class="py-3 px-3">
+                        {% if file.is_expired %}
+                        <span class="bg-red-500/15 text-red-300 px-2 py-1 rounded-full text-xs font-bold">Expired</span>
+                        {% else %}
+                        <span class="bg-green-500/15 text-green-300 px-2 py-1 rounded-full text-xs font-bold">Live</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3 px-3 text-right whitespace-nowrap">
+                        <a href="/watch/{{ file.short_code }}" target="_blank" title="Open" class="text-cyan-300 hover:text-white mx-1"><i class="fas fa-play"></i></a>
+                        <button onclick="copyLink('{{ base_url }}/dl/{{ file.short_code }}')" title="Copy link" class="text-gray-300 hover:text-white mx-1"><i class="fas fa-link"></i></button>
+                        <button onclick="act('extend/{{ file.short_code }}?hours=24','Extend by 24h?')" title="Extend 24h" class="text-amber-300 hover:text-white mx-1"><i class="fas fa-clock-rotate-left"></i></button>
+                        <button onclick="act('expire/{{ file.short_code }}','Expire this link now?')" title="Expire now" class="text-orange-300 hover:text-white mx-1"><i class="fas fa-ban"></i></button>
+                        <button onclick="act('delete/{{ file.short_code }}','Delete this link permanently?')" title="Delete" class="text-red-400 hover:text-red-300 mx-1"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="py-8 text-center text-gray-500">No files match this filter.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pages > 1 %}
+    <div class="flex justify-center gap-2 mt-6 text-sm">
+        {% if page_no > 1 %}<a href="?q={{ query }}&sort={{ sort }}&state={{ state }}&page={{ page_no - 1 }}" class="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10">Prev</a>{% endif %}
+        <span class="px-3 py-1 text-gray-400">Page {{ page_no }} / {{ pages }}</span>
+        {% if page_no < pages %}<a href="?q={{ query }}&sort={{ sort }}&state={{ state }}&page={{ page_no + 1 }}" class="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10">Next</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+async function act(path, confirmText) {
+    if (confirmText && !confirm(confirmText)) return;
+    const r = await fetch('/admin/files/' + path, { method: 'POST' });
+    if (r.ok) location.reload(); else alert('Action failed');
+}
+async function purgeExpired() {
+    if (!confirm('Delete every expired link?')) return;
+    const r = await fetch('/admin/files/purge-expired', { method: 'POST' });
+    const d = await r.json().catch(() => ({}));
+    alert(r.ok ? ('Deleted ' + (d.deleted || 0) + ' expired links') : 'Failed');
+    if (r.ok) location.reload();
+}
+function copyLink(url) { navigator.clipboard.writeText(url); }
+</script>
+{% endblock %}

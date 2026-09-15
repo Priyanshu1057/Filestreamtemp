@@ -1,0 +1,85 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Users - FilmyflixHD Admin{% endblock %}
+
+{% block admin %}
+<div class="glass-card p-6 md:p-8">
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div>
+            <h2 class="text-2xl font-bold">User Manager</h2>
+            <p class="text-sm text-gray-500">{{ total }} members</p>
+        </div>
+        <form action="/admin/users" method="get" class="flex flex-wrap gap-2">
+            <input type="text" name="q" placeholder="Search id, name or @username" value="{{ query or '' }}"
+                   class="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-pink-500">
+            <select name="status" class="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm">
+                <option value="all" {% if status=='all' %}selected{% endif %}>All</option>
+                <option value="active" {% if status=='active' %}selected{% endif %}>Active</option>
+                <option value="banned" {% if status=='banned' %}selected{% endif %}>Banned</option>
+            </select>
+            <button type="submit" class="btn-gradient px-4 py-2 rounded-xl text-sm font-bold">Filter</button>
+        </form>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+            <thead>
+                <tr class="border-b border-white/10 text-gray-400 uppercase text-xs tracking-widest">
+                    <th class="py-3 px-3">User ID</th>
+                    <th class="py-3 px-3">Username</th>
+                    <th class="py-3 px-3">Name</th>
+                    <th class="py-3 px-3">Files</th>
+                    <th class="py-3 px-3">Joined</th>
+                    <th class="py-3 px-3">Last Active</th>
+                    <th class="py-3 px-3">Status</th>
+                    <th class="py-3 px-3 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                    <td class="py-3 px-3 font-mono text-xs">{{ user.user_id }}</td>
+                    <td class="py-3 px-3 text-cyan-300">{% if user.username %}<a href="https://t.me/{{ user.username }}" target="_blank">@{{ user.username }}</a>{% else %}—{% endif %}</td>
+                    <td class="py-3 px-3">{{ user.first_name }} {{ user.last_name or '' }}{% if user.user_id == owner_id %} <span class="pill ml-1">Owner</span>{% endif %}</td>
+                    <td class="py-3 px-3"><a class="hover:underline" href="/admin/files?q=">{{ user.file_count }}</a></td>
+                    <td class="py-3 px-3 text-gray-400">{{ user.joined_at.strftime('%d %b %Y') if user.joined_at else '-' }}</td>
+                    <td class="py-3 px-3 text-gray-400">{{ user.last_active.strftime('%d %b %H:%M') if user.last_active else '-' }}</td>
+                    <td class="py-3 px-3">
+                        {% if user.is_banned %}
+                        <span class="bg-red-500/15 text-red-300 px-2 py-1 rounded-full text-xs font-bold">Banned</span>
+                        {% else %}
+                        <span class="bg-green-500/15 text-green-300 px-2 py-1 rounded-full text-xs font-bold">Active</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3 px-3 text-right whitespace-nowrap">
+                        {% if user.is_banned %}
+                        <button onclick="uact({{ user.user_id }},'unban','Unban this user?')" class="text-green-300 hover:text-white mx-1" title="Unban"><i class="fas fa-unlock"></i></button>
+                        {% else %}
+                        <button onclick="uact({{ user.user_id }},'ban','Ban this user?')" class="text-amber-300 hover:text-white mx-1" title="Ban"><i class="fas fa-user-slash"></i></button>
+                        {% endif %}
+                        <button onclick="uact({{ user.user_id }},'delete','Delete this user AND all their links?')" class="text-red-400 hover:text-red-300 mx-1" title="Delete"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="py-8 text-center text-gray-500">No users match this filter.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pages > 1 %}
+    <div class="flex justify-center gap-2 mt-6 text-sm">
+        {% if page_no > 1 %}<a href="?q={{ query }}&status={{ status }}&page={{ page_no - 1 }}" class="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10">Prev</a>{% endif %}
+        <span class="px-3 py-1 text-gray-400">Page {{ page_no }} / {{ pages }}</span>
+        {% if page_no < pages %}<a href="?q={{ query }}&status={{ status }}&page={{ page_no + 1 }}" class="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10">Next</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+async function uact(id, action, confirmText) {
+    if (!confirm(confirmText)) return;
+    const r = await fetch(`/admin/users/${id}/${action}`, { method: 'POST' });
+    if (r.ok) location.reload(); else alert('Action failed');
+}
+</script>
+{% endblock %}

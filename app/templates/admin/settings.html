@@ -1,0 +1,81 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Settings - FilmyflixHD Admin{% endblock %}
+
+{% block admin %}
+{% if saved %}
+<div class="bg-green-500/10 border border-green-500/30 text-green-300 rounded-xl p-3 text-sm mb-6">Settings saved.</div>
+{% endif %}
+
+<div class="grid lg:grid-cols-2 gap-6">
+    <div class="glass-card p-8">
+        <h2 class="text-2xl font-bold mb-6">Site Controls</h2>
+        <form method="post" action="/admin/settings" class="space-y-6">
+            <label class="flex items-center justify-between gap-4">
+                <span>
+                    <span class="font-semibold block">Maintenance mode</span>
+                    <span class="text-xs text-gray-500">Pause all public streaming</span>
+                </span>
+                <input type="checkbox" name="maintenance_mode" class="w-5 h-5 accent-pink-500" {% if app_settings.maintenance_mode %}checked{% endif %}>
+            </label>
+
+            <label class="flex items-center justify-between gap-4">
+                <span>
+                    <span class="font-semibold block">Downloads enabled</span>
+                    <span class="text-xs text-gray-500">Turn off to allow streaming only</span>
+                </span>
+                <input type="checkbox" name="downloads_enabled" class="w-5 h-5 accent-pink-500" {% if app_settings.downloads_enabled %}checked{% endif %}>
+            </label>
+
+            <div>
+                <span class="font-semibold block mb-2">Link lifetime (hours)</span>
+                <input type="number" name="auto_delete_hours" min="0" value="{{ app_settings.auto_delete_hours }}"
+                       class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 focus:outline-none focus:border-pink-500">
+                <p class="text-xs text-gray-500 mt-1">0 means links never expire.</p>
+            </div>
+
+            <div>
+                <span class="font-semibold block mb-2">Site notice</span>
+                <textarea name="notice" rows="3" placeholder="Shown to visitors on the player page"
+                          class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 focus:outline-none focus:border-pink-500">{{ app_settings.notice }}</textarea>
+            </div>
+
+            <button type="submit" class="btn-gradient px-6 py-3 rounded-xl font-bold">Save changes</button>
+        </form>
+    </div>
+
+    <div class="space-y-6">
+        <div class="glass-card p-8">
+            <h2 class="text-2xl font-bold mb-6">Configuration</h2>
+            <dl class="space-y-3 text-sm">
+                {% set rows = [
+                    ('Site URL', env.base_url),
+                    ('Storage channel', env.channel_id or 'NOT SET'),
+                    ('Owner ID', env.owner_id),
+                    ('Admins', env.admins | join(', ') or 'none'),
+                    ('Force-join channels', env.fsub | join(', ') or 'none'),
+                    ('Default expiry (h)', env.default_expiry),
+                    ('Extra accounts configured', env.sessions)
+                ] %}
+                {% for label, value in rows %}
+                <div class="flex justify-between gap-4 border-b border-white/5 pb-2">
+                    <dt class="text-gray-400">{{ label }}</dt>
+                    <dd class="text-right break-all">{{ value }}</dd>
+                </div>
+                {% endfor %}
+            </dl>
+            <p class="text-xs text-gray-500 mt-4">These come from your .env file and need a restart to change.</p>
+        </div>
+
+        <div class="glass-card p-8">
+            <h2 class="text-2xl font-bold mb-4">Server</h2>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><span class="text-gray-400 block text-xs uppercase tracking-widest">Uptime</span>{{ sys.uptime }}</div>
+                <div><span class="text-gray-400 block text-xs uppercase tracking-widest">CPU</span>{{ sys.cpu }}%</div>
+                <div><span class="text-gray-400 block text-xs uppercase tracking-widest">RAM</span>{{ sys.ram_used or (sys.ram ~ '%') }}</div>
+                <div><span class="text-gray-400 block text-xs uppercase tracking-widest">Disk</span>{{ sys.disk_used or (sys.disk ~ '%') }}</div>
+                <div><span class="text-gray-400 block text-xs uppercase tracking-widest">Download accounts</span>{{ sys.clients }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

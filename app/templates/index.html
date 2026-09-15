@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}FilmyflixHD - Direct Media Link & Streaming{% endblock %}
+
+{% block content %}
+<div class="text-center py-16 md:py-24">
+    <span class="pill mb-6"><i class="fas fa-bolt"></i> Multi-session turbo streaming</span>
+    <h1 class="display text-6xl md:text-8xl mb-6 leading-none">
+        FILMYFLIX<span class="text-gradient">HD</span><br>
+        <span class="text-4xl md:text-6xl text-white/80">MEDIA STREAMER</span>
+    </h1>
+    <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10">
+        Instant direct links and in-browser playback for your Telegram files.
+        No waiting, no storage, no limits.
+    </p>
+
+    <div class="flex flex-col md:flex-row justify-center items-center gap-4">
+        <a href="https://t.me/FilmyflixHD" target="_blank" rel="noopener" class="btn-gradient px-8 py-4 rounded-2xl font-bold text-lg flex items-center gap-2">
+            <i class="fab fa-telegram"></i> Official Channel
+        </a>
+        <a href="https://t.me/FilmyflixHD_supportbot" target="_blank" rel="noopener" class="glass px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/10 transition flex items-center gap-2">
+            <i class="fas fa-headset"></i> Support Chat
+        </a>
+    </div>
+</div>
+
+<div id="features" class="grid md:grid-cols-3 gap-8 mt-10">
+    <div class="glass-card p-8 text-center">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6" style="background: rgba(255,45,85,0.14); color: #ff7a94;">
+            <i class="fas fa-rocket"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-4">Instant Links</h3>
+        <p class="text-gray-400">Send a file, get a direct download and watch link in seconds.</p>
+    </div>
+
+    <div class="glass-card p-8 text-center">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6" style="background: rgba(255,209,102,0.14); color: #ffd166;">
+            <i class="fas fa-play"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-4">Cinema Player</h3>
+        <p class="text-gray-400">Smooth seeking, multi audio tracks and external app handoff.</p>
+    </div>
+
+    <div class="glass-card p-8 text-center">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6" style="background: rgba(124,58,237,0.16); color: #c4b5fd;">
+            <i class="fas fa-shield-halved"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-4">Zero Storage</h3>
+        <p class="text-gray-400">Everything streams live from Telegram. Nothing is kept on our servers.</p>
+    </div>
+</div>
+{% endblock %}

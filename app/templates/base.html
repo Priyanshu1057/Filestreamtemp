@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FilmyflixHD Streamer{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        :root {
+            --ink: #07060b;
+            --ink-2: #100b16;
+            --flame: #ff2d55;
+            --ember: #ff8a3d;
+            --gold: #ffd166;
+            --violet: #7c3aed;
+            --cyan: #22d3ee;
+        }
+
+        * { scrollbar-width: thin; scrollbar-color: var(--flame) transparent; }
+        ::-webkit-scrollbar { width: 9px; }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--flame), var(--violet));
+            border-radius: 99px;
+        }
+        ::selection { background: var(--flame); color: #fff; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            color: #f5f3ff;
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background:
+                radial-gradient(1200px 700px at 12% -10%, rgba(255, 45, 85, 0.20), transparent 60%),
+                radial-gradient(1000px 700px at 100% 0%, rgba(124, 58, 237, 0.22), transparent 60%),
+                radial-gradient(900px 600px at 50% 110%, rgba(34, 211, 238, 0.14), transparent 60%),
+                linear-gradient(160deg, var(--ink) 0%, var(--ink-2) 55%, #05040a 100%);
+            background-attachment: fixed;
+        }
+
+        /* Animated aurora ribbons (no video) */
+        .aurora {
+            position: fixed;
+            inset: -20%;
+            z-index: -3;
+            filter: blur(90px);
+            opacity: 0.55;
+            pointer-events: none;
+        }
+        .aurora span {
+            position: absolute;
+            display: block;
+            border-radius: 50%;
+            mix-blend-mode: screen;
+            animation: drift 22s ease-in-out infinite alternate;
+        }
+        .aurora span:nth-child(1) { width: 46vw; height: 46vw; left: 2%;  top: 4%;  background: var(--flame);  animation-duration: 19s; }
+        .aurora span:nth-child(2) { width: 40vw; height: 40vw; right: 4%; top: 12%; background: var(--violet); animation-duration: 26s; }
+        .aurora span:nth-child(3) { width: 34vw; height: 34vw; left: 32%; bottom: 0; background: var(--ember);  animation-duration: 31s; }
+        .aurora span:nth-child(4) { width: 26vw; height: 26vw; right: 22%; bottom: 6%; background: var(--cyan); animation-duration: 24s; }
+
+        @keyframes drift {
+            0%   { transform: translate3d(0, 0, 0) scale(1); }
+            50%  { transform: translate3d(6vw, -5vh, 0) scale(1.15); }
+            100% { transform: translate3d(-5vw, 6vh, 0) scale(0.92); }
+        }
+
+        /* Cinema grid + film grain */
+        .grid-veil {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+            background-size: 64px 64px;
+            mask-image: radial-gradient(circle at 50% 30%, #000 0%, transparent 78%);
+            -webkit-mask-image: radial-gradient(circle at 50% 30%, #000 0%, transparent 78%);
+        }
+        .grain {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.16;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+            animation: grainShift 1.2s steps(3) infinite;
+        }
+        @keyframes grainShift {
+            0% { transform: translate(0,0); }
+            33% { transform: translate(-3%, 2%); }
+            66% { transform: translate(2%, -3%); }
+            100% { transform: translate(0,0); }
+        }
+
+        .watermark {
+            position: fixed;
+            bottom: 18px;
+            right: 18px;
+            opacity: 0.09;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.4rem;
+            letter-spacing: 0.35rem;
+            pointer-events: none;
+            z-index: 1000;
+            user-select: none;
+            text-transform: uppercase;
+            transform: rotate(-12deg);
+        }
+
+        .display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.04em; }
+
+        .glass {
+            background: rgba(20, 14, 28, 0.45);
+            backdrop-filter: blur(16px) saturate(140%);
+            -webkit-backdrop-filter: blur(16px) saturate(140%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.9);
+        }
+
+        .glass-card {
+            position: relative;
+            background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.025));
+            backdrop-filter: blur(18px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 1.5rem;
+            box-shadow: 0 24px 60px -28px rgba(0,0,0,0.95);
+            transition: transform 0.35s cubic-bezier(.2,.8,.2,1), border-color 0.35s ease, box-shadow 0.35s ease;
+        }
+        .glass-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255,45,85,0.55), rgba(124,58,237,0.35), rgba(34,211,238,0.35));
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.35s ease;
+            pointer-events: none;
+        }
+        .glass-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 34px 80px -30px rgba(255, 45, 85, 0.35);
+        }
+        .glass-card:hover::after { opacity: 1; }
+
+        .btn-gradient {
+            background: linear-gradient(120deg, var(--flame) 0%, var(--ember) 55%, var(--gold) 100%);
+            color: #1a0710;
+            border: none;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+            box-shadow: 0 10px 30px -10px rgba(255, 45, 85, 0.65);
+        }
+        .btn-gradient:hover {
+            transform: translateY(-2px) scale(1.03);
+            filter: brightness(1.05);
+            box-shadow: 0 16px 40px -10px rgba(255, 138, 61, 0.7);
+        }
+
+        .text-gradient {
+            background: linear-gradient(110deg, var(--flame) 0%, var(--ember) 45%, var(--gold) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.9rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 45, 85, 0.35);
+            background: rgba(255, 45, 85, 0.10);
+            color: #ffb3c2;
+        }
+
+        .nav-link { position: relative; transition: color 0.25s ease; }
+        .nav-link::after {
+            content: "";
+            position: absolute;
+            left: 0; bottom: -6px;
+            height: 2px; width: 0;
+            background: linear-gradient(90deg, var(--flame), var(--gold));
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover { color: #fff; }
+        .nav-link:hover::after { width: 100%; }
+
+        .brand-mark {
+            width: 44px; height: 44px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, var(--flame), var(--violet));
+            box-shadow: 0 0 26px -6px rgba(255, 45, 85, 0.8);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .aurora span, .grain { animation: none; }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="aurora" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    <div class="grid-veil" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="watermark">FilmyflixHD</div>
+
+    <nav class="max-w-6xl mx-auto flex justify-between items-center mb-12 glass p-4 rounded-2xl">
+        <a href="/" class="flex items-center space-x-3">
+            <div class="brand-mark text-white text-xl">
+                <i class="fas fa-clapperboard"></i>
+            </div>
+            <span class="text-2xl font-extrabold tracking-tight">Filmyflix<span class="text-gradient">HD</span></span>
+        </a>
+        <div class="hidden md:flex space-x-8 text-sm font-medium text-gray-300">
+            <a href="/" class="nav-link">Home</a>
+            <a href="https://t.me/FilmyflixHD" target="_blank" rel="noopener" class="nav-link">Official Channel</a>
+            <a href="https://t.me/FilmyflixHD_supportbot" target="_blank" rel="noopener" class="nav-link">Support</a>
+        </div>
+        <a href="https://t.me/FilmyflixHD" target="_blank" rel="noopener" class="btn-gradient px-5 py-2.5 rounded-xl font-bold text-sm">
+            <i class="fab fa-telegram mr-1"></i> Join
+        </a>
+    </nav>
+
+    <main class="max-w-6xl mx-auto">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="mt-20 py-12 border-t border-white/5 text-center">
+        <div class="mb-6">
+            <h2 class="display text-4xl mb-2">FILMYFLIX<span class="text-gradient">HD</span></h2>
+            <p class="text-gray-500">Ultra-fast Telegram media streaming, straight to your screen.</p>
+        </div>
+        <div class="flex flex-wrap justify-center gap-6 mb-8">
+            <a href="https://t.me/FilmyflixHD" target="_blank" rel="noopener" class="text-gray-400 hover:text-white transition flex items-center gap-2">
+                <i class="fab fa-telegram"></i> Official Channel
+            </a>
+            <a href="https://t.me/FilmyflixHD_supportbot" target="_blank" rel="noopener" class="text-gray-400 hover:text-white transition flex items-center gap-2">
+                <i class="fas fa-headset"></i> Support Chat
+            </a>
+        </div>
+        <p class="text-gray-600 text-sm">&copy; 2026 FilmyflixHD. All rights reserved.</p>
+    </footer>
+</body>
+</html>

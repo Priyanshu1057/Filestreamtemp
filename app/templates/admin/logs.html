@@ -1,0 +1,21 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Logs - FilmyflixHD Admin{% endblock %}
+
+{% block admin %}
+<div class="glass-card p-6 md:p-8">
+    <h2 class="text-2xl font-bold mb-6">Activity Log</h2>
+    <div class="space-y-2 text-sm font-mono">
+        {% for log in logs %}
+        <div class="flex flex-wrap gap-3 items-baseline border-b border-white/5 pb-2">
+            <span class="text-gray-500">{{ log.at.strftime('%d %b %H:%M:%S') if log.at else '' }}</span>
+            <span class="pill">{{ log.type or 'event' }}</span>
+            <span class="text-gray-300 break-all">
+                {%- for k, v in log.items() if k not in ['_id', 'at', 'type'] %}{{ k }}={{ v }} {% endfor -%}
+            </span>
+        </div>
+        {% else %}
+        <p class="text-gray-500">No activity recorded yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

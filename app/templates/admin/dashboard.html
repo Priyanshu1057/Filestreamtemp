@@ -1,0 +1,120 @@
+{% extends "admin/_layout.html" %}
+{% block title %}Dashboard - FilmyflixHD Admin{% endblock %}
+
+{% block admin %}
+{% if app_settings.maintenance_mode %}
+<div class="bg-amber-500/10 border border-amber-500/30 text-amber-300 rounded-xl p-4 text-sm mb-6">
+    <i class="fas fa-triangle-exclamation mr-2"></i> Maintenance mode is ON — visitors cannot stream right now.
+</div>
+{% endif %}
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    {% set cards = [
+        ('Total Users', stats.total_users, 'fa-users', stats.new_users ~ ' new today'),
+        ('Total Files', stats.total_files, 'fa-film', stats.files_today ~ ' added today'),
+        ('Total Views', stats.total_views, 'fa-eye', stats.files_week ~ ' files this week'),
+        ('Storage Served', stats.total_size, 'fa-database', stats.expired_files ~ ' expired links')
+    ] %}
+    {% for label, value, icon, sub in cards %}
+    <div class="glass-card p-6">
+        <div class="flex items-center justify-between">
+            <span class="text-gray-400 text-xs uppercase font-bold tracking-widest">{{ label }}</span>
+            <i class="fas {{ icon }} text-pink-400"></i>
+        </div>
+        <h2 class="text-3xl font-extrabold mt-3">{{ value }}</h2>
+        <p class="text-xs text-gray-500 mt-1">{{ sub }}</p>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="grid md:grid-cols-3 gap-4 mb-8">
+    <div class="glass-card p-6">
+        <div class="flex justify-between text-sm mb-2"><span class="text-gray-400 font-bold uppercase text-xs tracking-widest">CPU</span><span id="cpu-val">{{ sys.cpu }}%</span></div>
+        <div class="w-full bg-white/10 rounded-full h-2"><div id="cpu-bar" class="h-2 rounded-full" style="width: {{ sys.cpu }}%; background: linear-gradient(90deg,var(--flame),var(--gold))"></div></div>
+    </div>
+    <div class="glass-card p-6">
+        <div class="flex justify-between text-sm mb-2"><span class="text-gray-400 font-bold uppercase text-xs tracking-widest">RAM</span><span id="ram-val">{{ sys.ram }}%</span></div>
+        <div class="w-full bg-white/10 rounded-full h-2"><div id="ram-bar" class="h-2 rounded-full" style="width: {{ sys.ram }}%; background: linear-gradient(90deg,var(--violet),var(--cyan))"></div></div>
+        <p class="text-xs text-gray-500 mt-2">{{ sys.ram_used }}</p>
+    </div>
+    <div class="glass-card p-6">
+        <div class="flex justify-between text-sm mb-2"><span class="text-gray-400 font-bold uppercase text-xs tracking-widest">Disk</span><span>{{ sys.disk }}%</span></div>
+        <div class="w-full bg-white/10 rounded-full h-2"><div class="h-2 rounded-full" style="width: {{ sys.disk }}%; background: linear-gradient(90deg,var(--ember),var(--flame))"></div></div>
+        <p class="text-xs text-gray-500 mt-2">{{ sys.disk_used }}</p>
+    </div>
+</div>
+
+<div class="grid md:grid-cols-4 gap-4 mb-8 text-sm">
+    <div class="glass-card p-5"><span class="text-gray-400 text-xs uppercase tracking-widest">Uptime</span><p class="text-xl font-bold mt-1">{{ sys.uptime }}</p></div>
+    <div class="glass-card p-5"><span class="text-gray-400 text-xs uppercase tracking-widest">Download Accounts</span><p class="text-xl font-bold mt-1">{{ sys.clients }}</p></div>
+    <div class="glass-card p-5"><span class="text-gray-400 text-xs uppercase tracking-widest">Active Users (24h)</span><p class="text-xl font-bold mt-1">{{ stats.active_users }}</p></div>
+    <div class="glass-card p-5"><span class="text-gray-400 text-xs uppercase tracking-widest">Banned</span><p class="text-xl font-bold mt-1 text-red-400">{{ stats.banned_users }}</p></div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6">
+    <div class="glass-card p-6">
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="text-xl font-bold">Latest Uploads</h3>
+            <a href="/admin/files" class="text-pink-400 text-sm hover:underline">View all &rarr;</a>
+        </div>
+        <div class="space-y-3">
+            {% for f in recent_files %}
+            <div class="flex items-center justify-between gap-3 border-b border-white/5 pb-2">
+                <div class="min-w-0">
+                    <p class="truncate text-sm">{{ f.filename }}</p>
+                    <p class="text-xs text-gray-500">{{ human(f.file_size) }} &middot; {{ f.access_count or 0 }} views</p>
+                </div>
+                <a href="/watch/{{ f.short_code }}" target="_blank" class="text-gray-400 hover:text-white"><i class="fas fa-arrow-up-right-from-square"></i></a>
+            </div>
+            {% else %}<p class="text-gray-500 text-sm">No files yet.</p>{% endfor %}
+        </div>
+    </div>
+
+    <div class="glass-card p-6">
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="text-xl font-bold">Most Watched</h3>
+            <a href="/admin/files?sort=views" class="text-pink-400 text-sm hover:underline">View all &rarr;</a>
+        </div>
+        <div class="space-y-3">
+            {% for f in top_files %}
+            <div class="flex items-center justify-between gap-3 border-b border-white/5 pb-2">
+                <p class="truncate text-sm">{{ f.filename }}</p>
+                <span class="pill">{{ f.access_count or 0 }} views</span>
+            </div>
+            {% else %}<p class="text-gray-500 text-sm">No data yet.</p>{% endfor %}
+        </div>
+    </div>
+
+    <div class="glass-card p-6 lg:col-span-2">
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="text-xl font-bold">Newest Members</h3>
+            <a href="/admin/users" class="text-pink-400 text-sm hover:underline">Manage users &rarr;</a>
+        </div>
+        <div class="grid md:grid-cols-2 gap-3">
+            {% for u in recent_users %}
+            <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                <div>
+                    <p class="text-sm">{{ u.first_name }} {{ u.last_name or '' }}</p>
+                    <p class="text-xs text-gray-500">@{{ u.username or 'none' }} &middot; {{ u.user_id }}</p>
+                </div>
+                {% if u.is_banned %}<span class="text-xs text-red-400 font-bold">BANNED</span>{% endif %}
+            </div>
+            {% else %}<p class="text-gray-500 text-sm">No users yet.</p>{% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+setInterval(async () => {
+    try {
+        const r = await fetch('/admin/api/stats');
+        if (!r.ok) return;
+        const d = await r.json();
+        document.getElementById('cpu-val').textContent = d.sys.cpu + '%';
+        document.getElementById('cpu-bar').style.width = d.sys.cpu + '%';
+        document.getElementById('ram-val').textContent = d.sys.ram + '%';
+        document.getElementById('ram-bar').style.width = d.sys.ram + '%';
+    } catch (e) {}
+}, 5000);
+</script>
+{% endblock %}
